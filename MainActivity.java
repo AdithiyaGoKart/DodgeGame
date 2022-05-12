@@ -2,20 +2,24 @@ package com.example.dodgegame;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.util.Log;
 import android.view.Display;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
+import android.widget.ImageView;
 
 import java.text.DecimalFormat;
 import java.util.Random;
@@ -80,7 +84,6 @@ public class MainActivity extends AppCompatActivity {
             screenWidth = sizeOfScreen.x;
             screenHeight = sizeOfScreen.y;
 
-
             SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
             Sensor sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             sensorManager.registerListener(GameSurface.this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
@@ -100,21 +103,7 @@ public class MainActivity extends AppCompatActivity {
                 increment();
                 createMissile(canvas);
                 rainingMissiles();
-//                new CountDownTimer(31000, 1000)
-//                {
-//                    @Override
-//                    public void onTick(long millisUntilFinished) {
-//                        DecimalFormat nf = new DecimalFormat("00");
-//                        long min = (millisUntilFinished/60000) % 60;
-//                        long sec = (millisUntilFinished/1000) % 60;
-//                        System.out.println(min+":"+sec);
-//
-//                    }
-//                    @Override
-//                    public void onFinish() {
-//                        System.out.println("your done");
-//                    }
-//                };
+                collisionCheck();
                 holder.unlockCanvasAndPost(canvas);
             }
         }
@@ -154,15 +143,42 @@ public class MainActivity extends AppCompatActivity {
             missileY -= yLimit;
             if (-missiles.getHeight()-missileY >= screenHeight)
             {
-                missileY = 0;
-                missileRand = random.nextInt(screenWidth/2)+(screenHeight/2);
+                Log.d("refire missile", "check");
+                missileY = -missiles.getHeight();
+                //missileRand = random.nextInt(screenWidth/2)+(screenHeight/2);
+                missileRand = (int) (Math.random()*(screenWidth/2));
+                //missileRand = 100;
             }
+        }
+        @SuppressLint("ResourceType")
+        public void collisionCheck()
+        {
+            Rect bbdragon = new Rect();
+            @SuppressLint("ResourceType") ImageView bebydrag = (ImageView) findViewById(R.drawable.babydragon_50);
+            bebydrag.getHitRect(bbdragon);
+
+            Rect missile = new Rect();
+            @SuppressLint("ResourceType") ImageView missaisle = (ImageView) findViewById(R.drawable.babydragon_50);
+            missaisle.getHitRect(missile);
+
+            if (Rect.intersects(bbdragon, missile))
+            {
+                bebydrag = findViewById(R.drawable.sadbabydragon);
+                Log.d("collided", "oof");
+                if (-missiles.getHeight()-missileY >= screenHeight){
+                    bebydrag = findViewById(R.drawable.babydragon_50);
+                }
+            }
+
         }
 
         @Override
         public void onSensorChanged(SensorEvent sensorEvent) {
             flipX = (int) (-1*sensorEvent.values[0]);
             flipY = (int) sensorEvent.values[1];
+            if (flipX > 5){
+                flipX+=-2;
+            }
         }
 
         @Override
