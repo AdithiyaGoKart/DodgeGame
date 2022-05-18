@@ -7,6 +7,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -111,6 +112,8 @@ public class MainActivity extends AppCompatActivity {
             sensorManager.registerListener(GameSurface.this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
 
             paintProperty = new Paint();
+            paintProperty.setColor(Color.RED);
+            paintProperty.setTextSize(35);
 
         }
 
@@ -123,21 +126,12 @@ public class MainActivity extends AppCompatActivity {
                 Canvas canvas = holder.lockCanvas();
                 canvas.drawRGB(red, green, blue);
                 canvas.drawBitmap(babydragon, (screenWidth/2)- babydragon.getWidth()/2 + babydragonX, (float) ((screenHeight/2)- babydragon.getHeight()/2 + babydragonY), null);
-                canvas.drawText("Points: ", 0.5f, 1f, paintProperty);
-                Rect bbdragon = new Rect(babydragonX, babydragonY, babydragonX+babydragon.getWidth(), babydragonY+babydragon.getHeight());
-                Rect missile = new Rect(missileX, missileY, missileX+missiles.getWidth(),missileY+missiles.getHeight());
+                canvas.drawText("Points: ", 300, 300, paintProperty);
 
-                int dragonWidth = bbdragon.width();
-                int dragonHeight = bbdragon.height();
-                int missileWidth = missile.width();
-                int missileHeight = missile.height();
-
-//                Log.d("width of dragon", bbdragon.width()+"");
-//                Log.d("width of missile", missile.width()+"");
                 increment();
                 createMissile(canvas);
                 rainingMissiles();
-                collisionCheck(canvas);
+                collisionCheck();
                 holder.unlockCanvasAndPost(canvas);
             }
         }
@@ -178,63 +172,25 @@ public class MainActivity extends AppCompatActivity {
 
             if (-missiles.getHeight()-missileY >= screenHeight)
             {
-                //Log.d("refire missile", "check");
+                Log.d("refire missile", "check");
                 missileY = -missiles.getHeight();
                 missileRand = random.nextInt(screenWidth/2);
             }
         }
         @SuppressLint("ResourceType")
-        public void collisionCheck(Canvas canvas)
+        public void collisionCheck()
         {
-            Rect bbdragon = new Rect(babydragonX, babydragonY, babydragonX+babydragon.getWidth(), babydragonY+babydragon.getHeight());
+            Rect bbdragon = new Rect((screenWidth/2)- babydragon.getWidth()/2 + babydragonX, ((screenHeight/2)- babydragon.getHeight()/2 + babydragonY), (screenWidth/2)- babydragon.getWidth()/2 + babydragonX+babydragon.getWidth(), ((screenHeight/2)- babydragon.getHeight()/2 + babydragonY) + babydragon.getHeight());
 
-            Rect missile = new Rect(missileX, missileY, missileX+missiles.getWidth(),missileY+missiles.getHeight());
+            Rect missile = new Rect(missileRand, -missiles.getHeight()-missileY, missileRand+missiles.getWidth(),-missiles.getHeight()-missileY+missiles.getHeight());
 
-            canvas.drawRect(bbdragon, paintProperty);
-            canvas.drawRect(missile, paintProperty);
-            
-//            if (babydragonX >= (missileX+1) || babydragonX < (missileX-1) || babydragonX == (missileX))
-//            {
-//                Log.d("pls god", "work");
-//            }
-//            else{
-//                //Log.d("not hit", "u suck");
-//            }
-//
-//             if (missile.bottom <= bbdragon.top){
-//                 Log.d("direct hit", "direct hit");
-//                 babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.sadbabydragon_50_1_50);
-//                 if (-missiles.getHeight()-missileY >= screenHeight){
-//                     Log.d("image change", "sad drag");
-//                     babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.babydragon_50);
-//                 }
-//             }
-//             if ((missile.left <= bbdragon.right) && (missile.right >= bbdragon.left)){
-//                 Log.d("right hit", "right hit");
-//                 babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.sadbabydragon_50_1_50);
-//                 if (-missiles.getHeight()-missileY >= screenHeight){
-//                     Log.d("image change", "sad drag");
-//                     babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.babydragon_50);
-//                 }
-//             }
-//             if ((missile.right >= bbdragon.left) && (missile.left) <= bbdragon.right){
-//                 Log.d("left hit", "left hit");
-//                 babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.sadbabydragon_50_1_50);
-//                 if (-missiles.getHeight()-missileY >= screenHeight){
-//                     Log.d("image change", "sad drag");
-//                     babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.babydragon_50);
-//                 }
-//             }
-
-            if (Rect.intersects(missile, bbdragon))
+            if (missile.intersect(bbdragon))
             {
-                //bebydrag = findViewById(R.drawable.sadbabydragon);
-
-                if (-missiles.getHeight()-missileY >= screenHeight){
-                    //bebydrag = findViewById(R.drawable.babydragon_50);
-                    Log.d("collided", "oof");
-                }
+                Log.d("collided", "oof");
+                babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.sadbabydragon);
             }
+            else
+                babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.babydragon_50);
         }
 
         @Override
