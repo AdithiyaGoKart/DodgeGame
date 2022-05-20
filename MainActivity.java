@@ -15,6 +15,11 @@ import android.hardware.Sensor;
 import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
+import android.media.AudioAttributes;
+import android.media.AudioManager;
+import android.media.MediaPlayer;
+import android.media.SoundPool;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.CountDownTimer;
 import android.util.Log;
@@ -55,24 +60,23 @@ public class MainActivity extends AppCompatActivity {
     public class GameSurface extends SurfaceView implements Runnable, SensorEventListener
     {
         Thread gameThread;
-        CountDownTimer countDownTimer;
         SurfaceHolder holder;
         volatile boolean running = false;
         Bitmap babydragon, missiles;
         Random random = new Random();
         int babydragonX = 0;
         int babydragonY = 0;
-        int missileX = 0;
         int missileY = 0;
         int flipX = 1;
         int flipY = 1;
+        int points = 0;
         int screenWidth;
         int screenHeight;
-        int red = 0;
-        int green = 0;
-        int blue = 0;
         int missileRand;
         Paint paintProperty;
+        private SoundPool soundPool;
+        MediaPlayer mediaPlayer;
+        int sound;
 
         public GameSurface(Context context)
         {
@@ -107,6 +111,14 @@ public class MainActivity extends AppCompatActivity {
             screenWidth = sizeOfScreen.x;
             screenHeight = sizeOfScreen.y;
 
+            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP){
+                AudioAttributes audioAttributes = new AudioAttributes.Builder().setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).setUsage(AudioAttributes.USAGE_GAME).build();
+                soundPool = new SoundPool.Builder().setMaxStreams(2).setAudioAttributes(audioAttributes).build();
+            } else
+                soundPool = new SoundPool(2, AudioManager.STREAM_MUSIC, 0);
+
+            sound = soundPool.load(getApplicationContext(), R.raw.explosion, 1);
+
             SensorManager sensorManager = (SensorManager) getSystemService(SENSOR_SERVICE);
             Sensor sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
             sensorManager.registerListener(GameSurface.this, sensor, SensorManager.SENSOR_DELAY_NORMAL);
@@ -124,9 +136,12 @@ public class MainActivity extends AppCompatActivity {
                 if (holder.getSurface().isValid() == false)
                     continue;
                 Canvas canvas = holder.lockCanvas();
-                canvas.drawRGB(red, green, blue);
+                canvas.drawRGB(0, 0, 0);
                 canvas.drawBitmap(babydragon, (screenWidth/2)- babydragon.getWidth()/2 + babydragonX, (float) ((screenHeight/2)- babydragon.getHeight()/2 + babydragonY), null);
-                canvas.drawText("Points: ", 300, 300, paintProperty);
+                canvas.drawText("Points: "+points, 100, 100, paintProperty);
+
+                mediaPlayer = MediaPlayer.create(getContext(), R.raw.bgmusic2);
+                mediaPlayer.start();
 
                 increment();
                 createMissile(canvas);
@@ -180,17 +195,27 @@ public class MainActivity extends AppCompatActivity {
         @SuppressLint("ResourceType")
         public void collisionCheck()
         {
+            int counter = 0;
             Rect bbdragon = new Rect((screenWidth/2)- babydragon.getWidth()/2 + babydragonX, ((screenHeight/2)- babydragon.getHeight()/2 + babydragonY), (screenWidth/2)- babydragon.getWidth()/2 + babydragonX+babydragon.getWidth(), ((screenHeight/2)- babydragon.getHeight()/2 + babydragonY) + babydragon.getHeight());
 
             Rect missile = new Rect(missileRand, -missiles.getHeight()-missileY, missileRand+missiles.getWidth(),-missiles.getHeight()-missileY+missiles.getHeight());
 
             if (missile.intersect(bbdragon))
             {
-                Log.d("collided", "oof");
-                babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.sadbabydragon);
+                counter = 1;
+                points-=10;
+                soundPool.play(sound, 1, 1,1 , 0, 1);
+                babydragon = BitmapFactory.decodeResource(getResources(),R.drawable.sadbabydragon);
             }
-            else
+            else{
+                if (((screenHeight/2)- babydragon.getHeight()/2 + babydragonY) + babydragon.getHeight() <= 0){
+                    points+=10;
+                }
                 babydragon = BitmapFactory.decodeResource(getResources(), R.drawable.babydragon_50);
+                
+                System.out.println("5");
+            }
+
         }
 
         @Override
